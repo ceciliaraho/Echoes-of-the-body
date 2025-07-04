@@ -1,16 +1,16 @@
 labels_info = {
     "P1": {
         'pranayama': (0, 280),
-        'chanting': (280, 540.01),
-        'viparita_swasa': (540.01, 655.5),
-        'breath_retention': (655.5, 732),
-        'meditation': (732, 1065.877)
+        'chanting': (280, 550),
+        'viparita_swasa': (550, 710),
+        'breath_retention': (710, 757),
+        'meditation': (757, 1065.877)
     },
     "P2": {
         'pranayama': (4, 395),
         'chanting': (395, 774),
-        'viparita_swasa': (774, 999),
-        'breath_retention': (999, 1060),
+        'viparita_swasa': (774, 995),
+        'breath_retention': (995, 1060),
         'meditation': (1060, 1342)
     },
     "P3": {
@@ -23,9 +23,9 @@ labels_info = {
     "P4": {
         'pranayama': (33, 554),
         'chanting': (554, 1102),
-        'viparita_swasa': (1102, 1353),
-        'breath_retention': (1353, 1409),
-        'meditation': (1409, 1810)
+        'viparita_swasa': (1102, 1351),
+        'breath_retention': (1351, 1408),
+        'meditation': (1408, 1810)
     },
     "P5": {
         'pranayama': (61, 449),

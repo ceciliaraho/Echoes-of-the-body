@@ -7,7 +7,8 @@ from process import preprocess_breath_signals, preprocess_hr_signals
 from resample import resample_signals
 from labels_config import labels_info
 from labeling import assign_labels
-from features import extract_features
+from features import extract_all_features, plot_peaks_by_section
+
 
 def process_folder(participant_path, participant, subfolder):
     folder_path = os.path.join(participant_path, subfolder)
@@ -51,33 +52,41 @@ def process_folder(participant_path, participant, subfolder):
 
     #resample
     resample_df = resample_signals(custom_df, fs=120)
+    print("\n Dopo resampling:")
+    print(resample_df["BF"].head(5))
+    print(resample_df["HR"].head(5))
+    print("STD:", np.std(resample_df["BF"].dropna().values))
     
+    if label_ranges:
+        resample_df = assign_labels(resample_df, label_ranges)
+    else:
+        print(f"Nessuna label trovata per {participant_id}")
+
+    resample_df = resample_df[resample_df["label"].str.lower() != "unlabeled"]
+
+    if resample_df.empty:
+        print(f"⚠️ Nessuna riga valida in {folder_path} dopo il filtro.")
 
     # ✅ Pulizia dei segnali
     clean_df = preprocess_breath_signals(resample_df)
     clean_df = preprocess_hr_signals(clean_df)
+    print("\n Dopo preprocess:")
+    print(clean_df["BF"].head(5))
+    print("STD:", np.std(clean_df["BF"].dropna().values))
 
-    if label_ranges:
-        clean_df = assign_labels(clean_df, label_ranges)
-    else:
-        print(f"Nessuna label trovata per {participant_id}")
-
-    clean_df = clean_df[clean_df["label"].str.lower() != "unlabeled"]
-
-    if clean_df.empty:
-        print(f"⚠️ Nessuna riga valida in {folder_path} dopo il filtro.")
-    
 
     # ✅ Salvataggio finale
     output_path = os.path.join(folder_path, "clean_signals_filtered.csv")
     clean_df.to_csv(output_path, index=False)
     print(f"\nSave file: {output_path}\n")
 
+    plot_peaks_by_section(clean_df, fs=120)
     
     all_feats = []
-    feats = extract_features(clean_df, fs=120, window_s=5)
+    feats = extract_all_features(clean_df, fs=120)
     feature_out_path = os.path.join(folder_path, "features.csv")
     feats.to_csv(feature_out_path, index=False)
+    
     
     feats["participant"] = participant
     #feats["subfolder"] = subfolder
