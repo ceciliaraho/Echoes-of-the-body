@@ -9,16 +9,6 @@ The project explores how real-time physiological signals — primarily breathing
 
 The goal is to study whether these adaptive compositions can induce similar states in a secondary listener, bridging physiological awareness and musical interaction.
 
----
-
-## 🎙️ Acquisition Module (`/acquisition`)
-
-This folder contains the scripts necessary to **record synchronized physiological data** from two sources:
-
-- **Zephyr BioHarness** (via serial port)
-- **Custom belt** (via OSC messages from Ableton Live through Max for Live)
-
-The system waits for a `/startRecording` message sent via OSC and then starts writing aligned data streams to CSV files. This ensures the beginning of the musical session matches exactly the start of physiological signal recording.
 
 ---
 
