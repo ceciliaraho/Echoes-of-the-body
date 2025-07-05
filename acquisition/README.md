@@ -1,3 +1,26 @@
+## Sensors Used
+### 1. Custom Breath Sensor (AKIA Protocol)
+- Developed at the IPEM Lab using the **AKIA platform**
+- Built on a **Teensy** microcontroller
+- Captures Breathing Frequency (BF) and Heart Rate (HR)
+- Sends real-time OSC messages to Ableton Live via Max for Live
+- Time-synced using the **ASIL clock system** (OSC, Dante, analog sync)
+
+<img src="img/custom.png" alt="Custom Breath Sensor" width="300"/>
+
+### 2. Zephyr BioHarness 3
+- Connected via **Bluetooth Classic**
+- Accessed via **serial protocol** without official software
+- Streams:
+  - ECG waveform
+  - Breathing waveform
+  - Heart Rate (HR)
+  - Respiration Rate (RR)
+
+<img src="img/zephyr.jpg" alt="Zephyr BioHarness" width="300"/>
+
+---
+
 ### Folder Contents
 
 | File                   | Description |
