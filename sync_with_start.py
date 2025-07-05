@@ -2,22 +2,20 @@ import subprocess
 import time
 from datetime import datetime
 
-# Interpreti Python per ciascun ambiente
 PYTHON_CUSTOM = "C:/Users/cecil/Desktop/akia-env/Scripts/python.exe"
 PYTHON_ZEPHYR = "C:/Users/cecil/AppData/Local/Programs/Python/Python39/python.exe"
 
-CUSTOM_SCRIPT = "retrieveClock.py"   # Questo è il tuo script OSC
-# Percorsi degli script da eseguire
-ZEPHYR_SCRIPT = "main1.py"           # Cambia col nome reale
+CUSTOM_SCRIPT = "retrieveClock.py"   # script to receive OSC 
+ZEPHYR_SCRIPT = "zephyr_data.py"           # zephyr
 
 
-# (Opzionale) File di log output
+# Output log file
 #LOG_CUSTOM = open("log_custom_pipeline.txt", "w")
 #LOG_ZEPHYR = open("log_zephyr_pipeline.txt", "w")
 LOG_CUSTOM = open("log_custom_session.txt", "w")
 LOG_ZEPHYR = open("log_zephyr_session.txt", "w")
 
-# File dove salvare il timestamp di sincronizzazione
+# File synch timestamp
 SYNC_FILE = "sync_start_timestamp.txt"
 
 def start_script(python_path, script_name, log_file):
@@ -30,7 +28,7 @@ def start_script(python_path, script_name, log_file):
     )
 
 def main():
-    print("Avvio sincronizzato Zephyr + OSC Receiver")
+    print("Synchronization Zephyr + OSC Receiver")
 
     # Timestamp comune
     sync_time = time.time()
@@ -46,21 +44,21 @@ def main():
     # Avvia entrambi gli script con log
     
 
-    print(" Script in esecuzione. Premi CTRL+C per terminare.")
+    print("CTRL+C to interrupt.")
 
     try:
         zephyr_proc.wait()
         custom_proc.wait()
         
     except KeyboardInterrupt:
-        print("\n Interruzione manuale. Chiudo i processi...")
+        print("\n Close the process...")
         
         custom_proc.terminate()
         zephyr_proc.terminate()
     finally:
         LOG_CUSTOM.close()
         LOG_ZEPHYR.close()
-        print(" Log salvati.")
+        print(" Log saved.")
 
 if __name__ == "__main__":
     main()
