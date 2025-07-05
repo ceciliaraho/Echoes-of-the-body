@@ -1,4 +1,4 @@
-### 📂 Folder Contents
+### Folder Contents
 
 | File                   | Description |
 |------------------------|-------------|
@@ -8,7 +8,7 @@
 
 ---
 
-### ▶️ How to Run the Acquisition Pipeline
+### How to Run the Acquisition Pipeline
 
 1. **Create the Python virtual environment for the custom belt (Python 3.8)**:
    ```bash
@@ -41,7 +41,7 @@
 
 ---
 
-### 📄 Output Files
+### Output Files
 
 | File                     | Description |
 |--------------------------|-------------|
