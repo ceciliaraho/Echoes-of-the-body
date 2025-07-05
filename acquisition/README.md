@@ -1,23 +1,9 @@
-
-# Bio-Adaptive Soundscape for Breath-Based Meditation
-
-This repository contains the code and data used for Cecilia Raho's master's thesis project, developed at IPEM - Ghent University.
-
-The project explores how real-time physiological signals — primarily breathing and heart rate — collected during the Shambhavi Mahamudra practice, can be used to:
-- classify the practitioner's psychophysiological state,
-- and generate adaptive musical soundscapes driven by biofeedback.
-
-The goal is to study whether these adaptive compositions can induce similar states in a secondary listener, bridging physiological awareness and musical interaction.
-
-
----
-
 ### 📂 Folder Contents
 
 | File                   | Description |
 |------------------------|-------------|
 | `zephyr_data.py`       | Connects to the Zephyr BioHarness device via serial port (`COM9`), enables ECG, respiration, RR and HR signals, and records real-time data to `bio_data.csv`. |
-| `retrieveClock.py`     | Receives OSC messages (`/bio`, `/startRecording`, `/stopRecording`) from a Max for Live patch in Ableton and records breathing frequency and heart rate to `custom_bio_data.csv`. |
+| `retrieveClock.py`     | Receives OSC messages (`/bio`, `/startRecording`, `/stopRecording`) from a Max for Live patch in Ableton and records breathing and heart signals to `custom_bio_data.csv`. |
 | `sync_with_start.py`   | Launches both `zephyr_data.py` and `retrieveClock.py` in parallel, creates a shared synchronization timestamp (`sync_start_timestamp.txt`), and logs both processes. |
 
 ---
