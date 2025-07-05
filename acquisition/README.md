@@ -6,7 +6,7 @@
 - Sends real-time OSC messages to Ableton Live via Max for Live
 - Time-synced using the **ASIL clock system** (OSC, Dante, analog sync)
 
-<img src="..img/custom.png" alt="Custom Breath Sensor" width="300"/>
+<img src="../img/custom.png" alt="Custom Breath Sensor" width="300"/>
 
 ### 2. Zephyr BioHarness 3
 - Connected via **Bluetooth Classic**
@@ -17,7 +17,7 @@
   - Heart Rate (HR)
   - Respiration Rate (RR)
 
-<img src="..img/zephyr.jpg" alt="Zephyr BioHarness" width="300"/>
+<img src="../img/zephyr.jpg" alt="Zephyr BioHarness" width="300"/>
 
 ---
 
