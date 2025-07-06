@@ -4,20 +4,22 @@ import matplotlib.pyplot as plt
 from scipy.signal import find_peaks
 from scipy.ndimage import gaussian_filter1d
 from scipy.stats import pearsonr
+from scipy.stats import skew, kurtosis
+
 
 # === PARAMETRI PICCHI RESPIRATORI ===
 def get_peak_params(label, fs):
     if label == "viparita_swasa":
-        return fs * 0.2, 0.015
+        return int(fs * 0.2), 0.005
     elif label == "chanting":
-        return fs * 0.7, 0.07
+        return int(fs * 0.9), 0.3
     elif label == "retention":
-        return fs * 1.0, 0.01
+        return int(fs * 3), 0.1
     elif label == "pranayama":
-        return fs * 0.6, 0.03
+        return int(fs * 1.1), 0.2
     else:
-        return fs * 0.5, 0.04
-
+        return int(fs * 0.9), 0.1
+    
 def get_peaks_from_bf(bf, label, fs):
     bf_smooth = gaussian_filter1d(bf, sigma=2)
     distance, prom = get_peak_params(label, fs)
@@ -29,7 +31,6 @@ def extract_hr_features(hr, bf):
     Calcola le feature dal segnale HR e la correlazione con BF:
     - RMSSD: root mean square of successive differences
     - Slope: variazione lineare tra inizio e fine
-    - Correlazione HR-BF
 
     Args:
         hr (np.ndarray): segnale HR (finestra)
@@ -52,6 +53,18 @@ def extract_hr_features(hr, bf):
     return {
         "hr_rmssd": hr_rmssd,
         "hr_slope": hr_slope,
+    }
+
+def compute_skew_kurtosis_features(hr, bf):
+    """
+    Calcola skewness e kurtosis su finestre di HR e BF.
+    Restituisce un dizionario con le nuove feature.
+    """
+    return {
+        "hr_skew": skew(hr) if len(hr) > 2 else np.nan,
+        "hr_kurtosis": kurtosis(hr) if len(hr) > 2 else np.nan,
+        "bf_skew": skew(bf) if len(bf) > 2 else np.nan,
+        "bf_kurtosis": kurtosis(bf) if len(bf) > 2 else np.nan
     }
 
 # === FEATURE EXTRACTION ===
@@ -93,6 +106,10 @@ def extract_features(df, fs=120, window_s=10):
         # HRV features
         hrv_features = extract_hr_features(hr, bf)
         f.update(hrv_features)
+
+        # Skewness & Kurtosis features
+        shape_features = compute_skew_kurtosis_features(hr, bf)
+        f.update(shape_features)
 
 
         features.append(f)
@@ -194,8 +211,8 @@ def extract_all_features(df, fs=120):
     rr_df = rr_df.sort_values("time_center")
     corr_slope_df = corr_slope_df.sort_values("time_center")
 
-    final_df = pd.merge_asof(feature_df, rr_df, on="time_center", direction="nearest", tolerance=5)
-    final_df = pd.merge_asof(final_df, corr_slope_df, on="time_center", direction="nearest", tolerance=5)
+    final_df = pd.merge_asof(feature_df, rr_df, on="time_center", direction="nearest", tolerance=10)
+    final_df = pd.merge_asof(final_df, corr_slope_df, on="time_center", direction="nearest", tolerance=10)
 
     return final_df
 
