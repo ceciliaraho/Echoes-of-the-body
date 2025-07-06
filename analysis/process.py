@@ -10,11 +10,10 @@ def uniform_amplitude(signal, target_std=0.1):
     signal = signal - np.mean(signal)
     current_std = np.std(signal)
     if current_std < 1e-6:
-        return signal  # Evita divisione per zero
+        return signal  # No division per zero
     return signal * (target_std / current_std)
 
-def estimate_cutoff_from_variance(signal, low_std=0.02, high_std=0.15, 
-                                  low_cutoff=0.2, high_cutoff=0.7):
+def estimate_cutoff_from_variance(signal, low_std=0.02, high_std=0.15, low_cutoff=0.2, high_cutoff=0.7):
     std = np.std(signal)
     if std <= low_std:
         return low_cutoff
@@ -51,7 +50,7 @@ def preprocess_breath_signals(df, fs_custom=120):
             if signal in segment.columns:
                 segment[signal] = segment[signal].interpolate(method='linear', limit_direction='both')
                 cutoff_dynamic = estimate_cutoff_from_variance(segment[signal].values)
-                print(f"🔹 Label: {label} | Cutoff stimato: {cutoff_dynamic:.2f} Hz")
+                print(f"Label: {label} | Cutoff estimated: {cutoff_dynamic:.2f} Hz")
                 segment[signal] = lowpass_filter(segment[signal].values, fs=fs_custom, cutoff=cutoff_dynamic)
                 #segment[signal] = uniform_amplitude(segment[signal].values)
                 segment[signal] = zscore_normalize(segment[signal])
