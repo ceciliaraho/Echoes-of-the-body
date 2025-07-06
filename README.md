@@ -41,4 +41,8 @@ The system waits for a `/startRecording` message sent via OSC and then starts wr
 
 This folder contains scripts necessary to clean, preprocess signals and extract necessary features.
 
+---
+
+## Model Module (`/model`)
+This folder contains scripts necessary for training and evaluating machine learning classifiers that predict the current phase of the Shambhavi Mahamudra practice based on physiological features extracted from breathing (BF) and heart rate (HR) signals.
 
