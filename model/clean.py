@@ -2,14 +2,14 @@ import pandas as pd
 
 df = pd.read_csv("features_dataset.csv")
 
-# Conta righe incomplete
+# Count lines where there is NaN value
 print(f"Righe totali: {len(df)}")
-print(f"Righe con valori NaN:\n{df.isna().sum()}")
+print(f"NaN:\n{df.isna().sum()}")
 
-# Rimuove righe con qualsiasi valore mancante
+# Delete these lines
 df_clean = df.dropna()
-print(f"Righe rimanenti dopo dropna: {len(df_clean)}")
+print(f"After remove NaN: {len(df_clean)}")
 
-# Salva nuovo dataset
+# Save new dataset
 df_clean.to_csv("features_dataset_clean.csv", index=False)
-print("✔ File salvato: features_dataset_clean.csv")
+print("Saved file: features_dataset_clean.csv")
