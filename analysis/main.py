@@ -56,6 +56,9 @@ def process_folder(participant_path, participant, subfolder):
     print(resample_df["BF"].head(5))
     print(resample_df["HR"].head(5))
     print("STD:", np.std(resample_df["BF"].dropna().values))
+    resample_path = os.path.join(folder_path, "resample_signals.csv")
+    resample_df.to_csv(resample_path, index=False)
+    print(f"\nSave file: {resample_path}\n")
     
     if label_ranges:
         resample_df = assign_labels(resample_df, label_ranges)
