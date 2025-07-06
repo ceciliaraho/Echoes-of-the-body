@@ -7,7 +7,7 @@ from scipy.stats import pearsonr
 from scipy.stats import skew, kurtosis
 
 
-# === PARAMETRI PICCHI RESPIRATORI ===
+# Parameters for peaks
 def get_peak_params(label, fs):
     if label == "viparita_swasa":
         return int(fs * 0.2), 0.005
@@ -26,40 +26,21 @@ def get_peaks_from_bf(bf, label, fs):
     peaks, _ = find_peaks(bf_smooth, distance=distance, prominence=prom)
     return peaks, bf_smooth
 
-def extract_hr_features(hr, bf):
-    """
-    Calcola le feature dal segnale HR e la correlazione con BF:
-    - RMSSD: root mean square of successive differences
-    - Slope: variazione lineare tra inizio e fine
-
-    Args:
-        hr (np.ndarray): segnale HR (finestra)
-        bf (np.ndarray): segnale BF (finestra)
-
-    Returns:
-        dict: dizionario con le feature
-    """
+def extract_hr_features(hr):
     hr = np.asarray(hr)
-    bf = np.asarray(bf)
-    
     # RMSSD
     hr_diff = np.diff(hr)
     hr_rmssd = np.sqrt(np.mean(hr_diff ** 2)) if len(hr_diff) > 1 else np.nan
-
-    # Slope (trend lineare grezza)
+    # Slope
     hr_slope = (hr[-1] - hr[0]) / len(hr) if len(hr) > 1 else np.nan
-
 
     return {
         "hr_rmssd": hr_rmssd,
         "hr_slope": hr_slope,
     }
-
+    
+#Skewness and kurtosis for windows of hr and bf.
 def compute_skew_kurtosis_features(hr, bf):
-    """
-    Calcola skewness e kurtosis su finestre di HR e BF.
-    Restituisce un dizionario con le nuove feature.
-    """
     return {
         "hr_skew": skew(hr) if len(hr) > 2 else np.nan,
         "hr_kurtosis": kurtosis(hr) if len(hr) > 2 else np.nan,
@@ -67,7 +48,7 @@ def compute_skew_kurtosis_features(hr, bf):
         "bf_kurtosis": kurtosis(bf) if len(bf) > 2 else np.nan
     }
 
-# === FEATURE EXTRACTION ===
+# Features extraction with sliding window of 10s
 def extract_features(df, fs=120, window_s=10):
     window_size = int(fs * window_s)
     features = []
@@ -103,20 +84,18 @@ def extract_features(df, fs=120, window_s=10):
             "label": label
         }
 
-        # HRV features
-        hrv_features = extract_hr_features(hr, bf)
+        hrv_features = extract_hr_features(hr)
         f.update(hrv_features)
 
-        # Skewness & Kurtosis features
+        # Skewness and Kurtosis features
         shape_features = compute_skew_kurtosis_features(hr, bf)
         f.update(shape_features)
-
 
         features.append(f)
 
     return pd.DataFrame(features)
 
-# === RR ESTIMATION SU FINESTRE LUNGHE ===
+# RR estimation on longer windows -> 40s
 def extract_rr_sliding(df, fs=120, window_s=40, step_s=10):
     window_size = int(fs * window_s)
     step_size = int(fs * step_s)
@@ -152,15 +131,9 @@ def z_normalize(sig):
 
 
 def extract_hr_corr_and_slope_long(df, fs=120, window_s=40, step_s=10):
-    """
-    Calcola sia la correlazione HR-BF (z-normalized) che lo slope HR su finestre lunghe.
-    """
     window_size = int(fs * window_s)
     step_size = int(fs * step_s)
     results = []
-
-    def z_normalize(sig):
-        return (sig - np.mean(sig)) / np.std(sig) if np.std(sig) > 0 else sig
 
     for start in range(0, len(df) - window_size + 1, step_size):
         end = start + window_size
@@ -175,7 +148,7 @@ def extract_hr_corr_and_slope_long(df, fs=120, window_s=40, step_s=10):
         hr = chunk["HR"].values
         bf = chunk["BF"].values
 
-        # Correlazione HR-BF
+        # Correlation between HR-BF
         if len(hr) == len(bf) and len(hr) > 1:
             hr_z = z_normalize(hr)
             bf_z = z_normalize(bf)
@@ -198,7 +171,6 @@ def extract_hr_corr_and_slope_long(df, fs=120, window_s=40, step_s=10):
 
     return pd.DataFrame(results)
 
-
 def extract_all_features(df, fs=120):
     window_s = 10
     feature_df = extract_features(df, fs=fs, window_s=window_s)
@@ -220,9 +192,6 @@ def extract_all_features(df, fs=120):
 
 
 def plot_peaks(bf,hr, time, bf_peaks, label):
-    """
-    Plotta il segnale BF smussato con i picchi evidenziati.
-    """
     plt.figure(figsize=(14, 6))
     # BF plot
     plt.subplot(2, 1, 1)
@@ -247,9 +216,6 @@ def plot_peaks(bf,hr, time, bf_peaks, label):
     plt.show()
 
 def plot_peaks_by_section(df, fs=120):
-    """
-    Plotta i picchi del segnale BF, HR per ciascuna sezione (label) dell'intero segnale.
-    """
     unique_labels = df["label"].dropna().unique()
 
     for label in unique_labels:
@@ -263,7 +229,6 @@ def plot_peaks_by_section(df, fs=120):
         bf = section_df["BF"].values
         hr=section_df["HR"].values
         time = section_df["time_from_start"].values
-
 
         bf_peaks, bf_smooth = get_peaks_from_bf(bf, label, fs)
         plot_peaks(bf_smooth, hr, time, bf_peaks, label)
