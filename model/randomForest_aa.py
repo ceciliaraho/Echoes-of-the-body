@@ -7,7 +7,7 @@ from sklearn.preprocessing import LabelEncoder
 from collections import defaultdict
 
 # === Carica i dati ===
-df = pd.read_csv("features_dataset_clean.csv")
+df = pd.read_csv("features_dataset_minmax_clean.csv")
 
 # === Prepara X e y ===
 X = df.drop(columns=["label", "participant", 'time_center'])

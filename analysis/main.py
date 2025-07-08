@@ -7,7 +7,7 @@ from process import preprocess_breath_signals, preprocess_hr_signals
 from resample import resample_signals
 from labels_config import labels_info
 from labeling import assign_labels
-from features import extract_all_features, plot_peaks_by_section
+from features import extract_all_features, plot_peaks_by_section, normalize_all_versions
 
 
 def process_folder(participant_path, participant, subfolder):
@@ -76,17 +76,20 @@ def process_folder(participant_path, participant, subfolder):
     plot_peaks_by_section(clean_df, fs=120)
 
     # Features extraction -> features.py
-    all_feats = []
+    
     feats = extract_all_features(clean_df, fs=120)
+    feats["participant"] = participant
     # Save features per each participant
     feature_out_path = os.path.join(folder_path, "features.csv")
     feats.to_csv(feature_out_path, index=False)
     
     
-    feats["participant"] = participant
-    all_feats.append(feats)
+    normalized_versions = normalize_all_versions(feats, drop_cols=["label", "time_center", "participant"])
+    for norm_type, norm_df in normalized_versions.items():
+        out_path = os.path.join(folder_path, f"features_{norm_type}.csv")
+        norm_df.to_csv(out_path, index=False)
 
-    return all_feats
+    return normalized_versions  # Rest
     
 
 if __name__ == "__main__":
@@ -94,7 +97,7 @@ if __name__ == "__main__":
     base_path = os.path.join("..", "dataset")
     participants = [p for p in os.listdir(base_path) if p.startswith("P")]
 
-    all_participant_feats = [] 
+    all_versions = { "minmax": [], "zscore": [], "robust": [] }
 
     for participant in participants:
         print(f"\n====\nProcessing {participant}\n====")
@@ -104,12 +107,16 @@ if __name__ == "__main__":
             print(f"\n--- {subfolder.upper()} ---")
             feats = process_folder(participant_path, participant, subfolder)
             if feats:
-                all_participant_feats.extend(feats) 
+                for key in all_versions.keys():
+                    all_versions[key].append(feats[key]) 
 
-    # Complete feature dataset of all participants 
-    df_feats = pd.concat(all_participant_feats, ignore_index=True)
-    df_feats.to_csv("features_dataset.csv", index=False)
-    print("\nFeature extraction completed:", df_feats.shape)
+
+    for norm_type, dfs in all_versions.items():
+        if dfs:
+            df_all = pd.concat(dfs, ignore_index=True)
+            out_path = f"features_dataset_{norm_type}.csv"
+            df_all.to_csv(out_path, index=False)
+            print(f"✅ Saved {out_path} - Shape: {df_all.shape}")
   
     #base_path = os.path.join("..", "dataset")
     #participant_path = os.path.join(base_path, "P3")

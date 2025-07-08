@@ -5,6 +5,7 @@ from scipy.signal import find_peaks
 from scipy.ndimage import gaussian_filter1d
 from scipy.stats import pearsonr
 from scipy.stats import skew, kurtosis
+from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler
 
 
 # Parameters for peaks
@@ -21,8 +22,61 @@ def get_peak_params(label, fs):
         return int(fs * 0.9), 0.1
     
 def get_peaks_from_bf(bf, label, fs):
+    """
     bf_smooth = gaussian_filter1d(bf, sigma=2)
-    distance, prom = get_peak_params(label, fs)
+    distance = int(fs*0.3)
+    prom = 0.2 * (np.max(bf_smooth) - np.min(bf_smooth))  # 20% del range dinamico
+    #distance, prom = get_peak_params(label, fs)
+    peaks, _ = find_peaks(bf_smooth, distance=distance, prominence=prom)
+    return peaks, bf_smooth
+
+     bf_smooth = gaussian_filter1d(bf, sigma=1.2)
+
+    # Stima dinamica del range e dell’energia del segnale
+    dynamic_range = np.max(bf_smooth) - np.min(bf_smooth)
+    std_dev = np.std(bf_smooth)
+
+    if dynamic_range < 2.5:  # segnale molto piatto
+        distance = int(fs * 0.15)
+        prom = 0.2
+    elif dynamic_range < 4:
+        distance = int(fs * 0.25)
+        prom = 0.3
+    else:
+        distance = int(fs * 0.35)
+        prom = 0.4
+
+    peaks, _ = find_peaks(bf_smooth, distance=distance, prominence=prom)
+    return peaks, bf_smooth
+    """
+    bf_smooth = gaussian_filter1d(bf, sigma=0.8)  # filtraggio moderato
+
+    # Indicatori del segnale
+    bf_range = np.max(bf_smooth) - np.min(bf_smooth)
+
+    bf_std = np.std(bf_smooth)
+
+    # Parametri adattivi
+    if bf_range < 0.1 or bf_std < 0.02:
+        # Segnale piatto o fine (es. viparita)
+        distance = int(fs * 0.1)
+        prom = 0.01
+    elif bf_range < 0.2 or bf_std < 0.04:
+        # Segnale con variazioni medie
+        distance = int(fs * 0.2)
+        prom = 0.03
+    elif bf_range < 0.05:
+        print("Rinormalizzo con zscore solo per i picchi")
+        bf_smooth = gaussian_filter1d(z_normalize(bf), sigma=0.5)
+        prom = 0.3  # torna a valori per zscore
+    else:
+        # Segnale ampio e lento
+        distance = int(fs * 0.35)
+        prom = 0.05
+
+    # Debug (opzionale)
+    print(f"[PEAKS] range={bf_range:.3f} | std={bf_std:.3f} | dist={distance} | prom={prom}")
+
     peaks, _ = find_peaks(bf_smooth, distance=distance, prominence=prom)
     return peaks, bf_smooth
 
@@ -61,8 +115,8 @@ def extract_features(df, fs=120, window_s=10):
         chunk = df.iloc[start:end]
 
         label_series = chunk["label"]
-        if label_series.isna().any():
-            continue
+        #if label_series.isna().any():
+        #    continue
         label = label_series.mode()[0]
         if str(label).lower() == "unlabeled":
             continue
@@ -71,6 +125,7 @@ def extract_features(df, fs=120, window_s=10):
         bf = chunk["BF"].values
 
         f = {
+            "label": label,
             "hr_mean": hr.mean(),
             "hr_std": hr.std(),
             "hr_min": hr.min(),
@@ -81,7 +136,7 @@ def extract_features(df, fs=120, window_s=10):
             "bf_min": bf.min(),
             "bf_max": bf.max(),
             "bf_range": bf.max() - bf.min(),
-            "label": label
+           
         }
 
         hrv_features = extract_hr_features(hr)
@@ -116,8 +171,8 @@ def extract_rr_sliding(df, fs=120, window_s=40, step_s=10):
 
         if len(peaks) >= 2:
             rr = 60 / np.mean(np.diff(peaks) / fs)
-        elif label == "retention":
-            rr = 0.0
+        #elif label == "retention":
+        #    rr = 0.0
         else:
             rr = np.nan
 
@@ -139,8 +194,8 @@ def extract_hr_corr_and_slope_long(df, fs=120, window_s=40, step_s=10):
         end = start + window_size
         chunk = df.iloc[start:end]
         label_series = chunk["label"]
-        if label_series.isna().any() or label_series.mode().empty:
-            continue
+        #if label_series.isna().any() or label_series.mode().empty:
+        #    continue
         label = label_series.mode()[0]
         if str(label).lower() == "unlabeled":
             continue
@@ -150,10 +205,9 @@ def extract_hr_corr_and_slope_long(df, fs=120, window_s=40, step_s=10):
 
         # Correlation between HR-BF
         if len(hr) == len(bf) and len(hr) > 1:
-            hr_z = z_normalize(hr)
-            bf_z = z_normalize(bf)
+        
             try:
-                corr = pearsonr(hr_z, bf_z)[0]
+                corr = pearsonr(hr, bf)[0]
             except:
                 corr = np.nan
         else:
@@ -189,7 +243,29 @@ def extract_all_features(df, fs=120):
     return final_df
 
 
+def normalize_all_versions(df, drop_cols=["label", "participant", "time_center"]):
+    """
+    Applica tre tipi di normalizzazione: MinMax, Standard (Z-score) e Robust.
+    Restituisce un dizionario di DataFrame normalizzati.
+    """
+    results = {}
+    scalers = {
+        "minmax": MinMaxScaler(),
+        "zscore": StandardScaler(),
+        "robust": RobustScaler()
+    }
 
+    df = df.copy()
+    keep = df[drop_cols]
+    features = df.drop(columns=drop_cols)
+
+    for name, scaler in scalers.items():
+        scaled = scaler.fit_transform(features)
+        df_scaled = pd.DataFrame(scaled, columns=features.columns)
+        df_final = pd.concat([df_scaled, keep.reset_index(drop=True)], axis=1)
+        results[name] = df_final
+
+    return results
 
 def plot_peaks(bf,hr, time, bf_peaks, label):
     plt.figure(figsize=(14, 6))

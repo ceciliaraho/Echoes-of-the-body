@@ -38,7 +38,15 @@ def zscore_normalize(signal):
         signal = signal.values
     return scaler.fit_transform(signal.reshape(-1, 1)).flatten()
 
+def min_max_normalize(signal):
+    if isinstance(signal, pd.Series):
+        signal = signal.values
+    min_val = np.min(signal)
+    max_val = np.max(signal)
+    return (signal - min_val) / (max_val - min_val) if max_val != min_val else signal
+
 def preprocess_breath_signals(df, fs_custom=120):
+    """
     df = df.copy()
     if "label" not in df.columns:
         raise ValueError("Colonna 'label' mancante nel DataFrame.")
@@ -56,6 +64,19 @@ def preprocess_breath_signals(df, fs_custom=120):
                 segment[signal] = zscore_normalize(segment[signal])
         processed_segments.append(segment)
     return pd.concat(processed_segments).sort_values(by="time_from_start").reset_index(drop=True)
+    """
+    
+    df = df.copy()
+    for signal in ["BF"]:
+        if signal in df.columns:
+            df[signal] = df[signal].interpolate(method='linear', limit_direction='both')
+            cutoff_dynamic = estimate_cutoff_from_variance(df[signal].values)
+            print(f"[Global] Cutoff estimated: {cutoff_dynamic:.2f} Hz")
+            df[signal] = lowpass_filter(df[signal].values, fs=fs_custom, cutoff=cutoff_dynamic)
+            #df[signal] = zscore_normalize(df[signal])
+            df[signal] = min_max_normalize(df[signal])
+    return df
+
 
 def preprocess_hr_signals(df, columns=["HR"]):
     df = df.copy()
@@ -65,6 +86,7 @@ def preprocess_hr_signals(df, columns=["HR"]):
             signal = signal.interpolate(method='linear', limit_direction='both')
             signal = signal.rolling(window=3, center=True, min_periods=1).mean()
             #signal = uniform_amplitude(signal.values)
-            signal = zscore_normalize(signal)
+            #ignal = zscore_normalize(signal)
+            signal = min_max_normalize(signal)
             df[column] = signal
     return df
