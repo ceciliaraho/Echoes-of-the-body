@@ -6,7 +6,7 @@ from xgboost import XGBClassifier
 import matplotlib.pyplot as plt
 
 # Carica il dataset
-df = pd.read_csv("features_dataset_clean.csv")
+df = pd.read_csv("features_dataset_minmax_clean.csv")
 
 # Codifica le label numericamente
 label_mapping = {label: i for i, label in enumerate(df['label'].unique())}
