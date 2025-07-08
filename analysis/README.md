@@ -60,7 +60,7 @@
 | Feature Name         | Description |
 |----------------------|-------------|
 | `bf_rr`              | Estimated respiratory rate based on inter-peak distance of BF |
-| `hr_bf_corr_long`    | Pearson correlation between z-normalized HR and BF |
+| `hr_bf_corr_long`    | Pearson correlation between normalized HR and BF |
 | `hr_slope_long`      | Linear slope of HR over the longer window |
 
 These features are merged based on the `time_center` of each window. The output is a rich dataset describing physiological patterns across the five phases of **Shambhavi Mahamudra**.
