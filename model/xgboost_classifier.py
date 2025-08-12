@@ -9,7 +9,7 @@ from sklearn.preprocessing import LabelEncoder
 import joblib
 
 # Load data
-df = pd.read_csv("features_dataset_zscore_clean.csv")
+df = pd.read_csv("features_dataset_minmax.csv")
 
 # split
 X = df.drop(columns=["label", 'participant', 'time_center'])

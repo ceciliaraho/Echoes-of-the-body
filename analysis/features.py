@@ -9,17 +9,17 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler
 
 
 # Parameters for peaks
-def get_peak_params(label, fs):
-    if label == "viparita_swasa":
-        return int(fs * 0.2), 0.005
-    elif label == "chanting":
-        return int(fs * 0.9), 0.3
-    elif label == "retention":
-        return int(fs * 3), 0.1
-    elif label == "pranayama":
-        return int(fs * 1.1), 0.2
-    else:
-        return int(fs * 0.9), 0.1
+#def get_peak_params(label, fs):
+#    if label == "viparita_swasa":
+#        return int(fs * 0.2), 0.005
+#    elif label == "chanting":
+#        return int(fs * 0.9), 0.3
+#    elif label == "retention":
+#        return int(fs * 3), 0.1
+#    elif label == "pranayama":
+#        return int(fs * 1.1), 0.2
+#    else:
+#        return int(fs * 0.9), 0.1
     
 def get_peaks_from_bf(bf, label, fs):
     """
@@ -171,18 +171,13 @@ def extract_rr_sliding(df, fs=120, window_s=40, step_s=10):
 
         if len(peaks) >= 2:
             rr = 60 / np.mean(np.diff(peaks) / fs)
-        #elif label == "retention":
-        #    rr = 0.0
         else:
             rr = np.nan
 
-        time_center = int(chunk["time_from_start"].iloc[window_size // 2])
+        time_center = round(start / fs + window_s / 2, 2)
         rr_list.append({"time_center": time_center, "bf_rr": rr})
 
     return pd.DataFrame(rr_list)
-
-def z_normalize(sig):
-    return (sig - np.mean(sig)) / np.std(sig) if np.std(sig) > 0 else sig
 
 
 def extract_hr_corr_and_slope_long(df, fs=120, window_s=40, step_s=10):
@@ -194,8 +189,8 @@ def extract_hr_corr_and_slope_long(df, fs=120, window_s=40, step_s=10):
         end = start + window_size
         chunk = df.iloc[start:end]
         label_series = chunk["label"]
-        #if label_series.isna().any() or label_series.mode().empty:
-        #    continue
+        if label_series.mode().empty:
+            continue
         label = label_series.mode()[0]
         if str(label).lower() == "unlabeled":
             continue
@@ -203,9 +198,7 @@ def extract_hr_corr_and_slope_long(df, fs=120, window_s=40, step_s=10):
         hr = chunk["HR"].values
         bf = chunk["BF"].values
 
-        # Correlation between HR-BF
         if len(hr) == len(bf) and len(hr) > 1:
-        
             try:
                 corr = pearsonr(hr, bf)[0]
             except:
@@ -213,10 +206,9 @@ def extract_hr_corr_and_slope_long(df, fs=120, window_s=40, step_s=10):
         else:
             corr = np.nan
 
-        # Slope HR
         slope = (hr[-1] - hr[0]) / len(hr) if len(hr) > 1 else np.nan
 
-        time_center = int(chunk["time_from_start"].iloc[window_size // 2])
+        time_center = round(start / fs + window_s / 2, 2)
         results.append({
             "time_center": time_center,
             "hr_bf_corr_long": corr,
@@ -225,10 +217,16 @@ def extract_hr_corr_and_slope_long(df, fs=120, window_s=40, step_s=10):
 
     return pd.DataFrame(results)
 
+
+def z_normalize(sig):
+    return (sig - np.mean(sig)) / np.std(sig) if np.std(sig) > 0 else sig
+        
+
 def extract_all_features(df, fs=120):
     window_s = 10
     feature_df = extract_features(df, fs=fs, window_s=window_s)
     feature_df["time_center"] = feature_df.index * window_s
+    feature_df["time_center"] = feature_df["time_center"].astype(float)
 
     rr_df = extract_rr_sliding(df, fs=fs, window_s=40, step_s=10)
     corr_slope_df = extract_hr_corr_and_slope_long(df, fs=fs, window_s=40, step_s=10)
@@ -239,6 +237,17 @@ def extract_all_features(df, fs=120):
 
     final_df = pd.merge_asof(feature_df, rr_df, on="time_center", direction="nearest", tolerance=10)
     final_df = pd.merge_asof(final_df, corr_slope_df, on="time_center", direction="nearest", tolerance=10)
+
+    # === Gestione dei NaN per classificatore ===
+    final_df["missing_bf_rr"] = final_df["bf_rr"].isna().astype(int)
+    final_df["bf_rr"] = final_df["bf_rr"].fillna(-1)
+
+    # opzionale:
+    final_df["missing_corr"] = final_df["hr_bf_corr_long"].isna().astype(int)
+    final_df["hr_bf_corr_long"] = final_df["hr_bf_corr_long"].fillna(0)
+
+    final_df["missing_slope"] = final_df["hr_slope_long"].isna().astype(int)
+    final_df["hr_slope_long"] = final_df["hr_slope_long"].fillna(0)
 
     return final_df
 

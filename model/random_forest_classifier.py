@@ -7,7 +7,7 @@ from sklearn.metrics import classification_report, confusion_matrix, accuracy_sc
 from sklearn.preprocessing import LabelEncoder
 
 # Load data
-df = pd.read_csv("features_dataset_robust_clean.csv")
+df = pd.read_csv("features_dataset_robust.csv")
 
 # Split data 
 X = df.drop(columns=["label", "participant", "time_center"])
