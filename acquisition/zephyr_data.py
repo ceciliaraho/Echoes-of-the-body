@@ -7,7 +7,7 @@ import threading
 
 PYTHON_ZEPHYR = "C:/Users/cecil/AppData/Local/Programs/Python/Python39/python.exe"
 
-# Impostazioni
+# Settings
 PORT = "COM9"
 BAUDRATE = 115200
 ACQUISITION_DELAY = 4.0

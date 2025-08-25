@@ -28,34 +28,6 @@ def resample_signals(df, fs=120):
         'local_timestamp': pd.to_datetime(interp_TS(uniform_time))
     })
 
-
-
-    #  Plot
-    #plt.figure(figsize=(14, 6))
-
-    # HR
-    #plt.subplot(2, 1, 1)
-    #plt.plot(df['time_from_start'], df['HR'], '.', color='gray', label='Original HR', markersize=2)
-    #plt.plot(uniform_time, df_resampled['HR'], '-', color='blue', label='Interpolated HR (120 Hz)', linewidth=1)
-    #plt.title("Heart Rate (HR) - Original vs Resampled")
-    #plt.xlabel("Time (s)")
-    #plt.ylabel("HR")
-    #plt.legend()
-    #plt.grid(True)
-
-    # BF
-    #plt.subplot(2, 1, 2)
-    #plt.plot(df['time_from_start'], df['BF'], '.', color='gray', label='Original BF', markersize=2)
-    #plt.plot(uniform_time, df_resampled['BF'], '-', color='green', label='Interpolated BF (120 Hz)', linewidth=1)
-    #plt.title("Breathing Frequency (BF) - Original vs Resampled")
-    #plt.xlabel("Time (s)")
-    #plt.ylabel("BF")
-    #plt.legend()
-    #plt.grid(True)
-
-    #plt.tight_layout()
-    #plt.show()
-
     return df_resampled
 
 

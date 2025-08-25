@@ -7,53 +7,53 @@ import csv
 from pythonosc.udp_client import SimpleUDPClient
 
 
-# Nome file output
+# output file
 #CSV_FILENAME = "custom_bio_data_pipeline.csv"
 CSV_FILENAME = "custom_bio_data.csv"
 
-# Flag per decidere quando registrare
+# To record
 recording = False
 
-# Configura il server OSC
-zephyr_client = SimpleUDPClient("127.0.0.1", 6576)  # IP localhost, porta scelta per Zephyr
+# Server OSC configuration
+zephyr_client = SimpleUDPClient("127.0.0.1", 6576)  # IP localhost, port for Zephyr
 
 
-# Crea e apre il file CSV
+# CSV
 csv_file = open(CSV_FILENAME, "w", newline="")
 csv_writer = csv.writer(csv_file)
 csv_writer.writerow(["local_timestamp", "bio_time", "BF", "HR"])
 
 
-# Handler per messaggi /bio
+# Handler for /bio
 def bio_handler(address, *args):
     global recording
     now = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
-    print(f"\n Ricevuto {address}: {args}")
+    print(f"\n Received {address}: {args}")
 
     if not recording:
-        print("Ignorato perché recording = False")
+        print("Don't saved because recording = False")
         return
 
-    # Se sai che sono time, bf, hr:
+    # I know that I have: time, bf, hr
     if len(args) == 3:
         time_val, bf, hr = args
-        print(f" SALVO: Time: {time_val} | BF: {bf} | HR: {hr}")
+        print(f" Save: Time: {time_val} | BF: {bf} | HR: {hr}")
         csv_writer.writerow([now, time_val, bf, hr])
     else:
-        print("Dati /bio con numero di argomenti inaspettato:", args)
+        print("Data /bio with unespected number of args:", args)
 
 
-# Handler per avvio registrazione
+# Handler to start recording
 def start_recording_handler(address, *args):
     global recording
     recording = True
-    print(f"Registrazione {address}: {args}")
+    print(f"Recording {address}: {args}")
     zephyr_client.send_message("/startRecording", [])
 
 def stop_recording_handler(address, *args):
     global recording
     recording = False
-    print("Registrazione FERMATA")
+    print("Stop recording")
     zephyr_client.send_message("/stopRecording", [])
 
 # Default handler
@@ -72,14 +72,14 @@ if __name__ == "__main__":
         ip = socket.gethostbyname(socket.gethostname())
         port = 6575
 
-        print(f"In ascolto su {ip}:{port} (path /bio e /startRecording)...")
+        print(f"{ip}:{port} (path /bio and /startRecording)...")
         server = BlockingOSCUDPServer((ip, port), dispatcher)
         server.serve_forever()
     except KeyboardInterrupt:
-        print("\n Interruzione manuale.")
+        print("\n keyboard interrupt")
     finally:
         csv_file.close()
-        print(f"File CSV salvato come: {CSV_FILENAME}")
+        print(f"CSV saved: {CSV_FILENAME}")
 
 
 

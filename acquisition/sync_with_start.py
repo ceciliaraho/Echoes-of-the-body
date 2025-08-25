@@ -6,7 +6,7 @@ PYTHON_CUSTOM = "C:/Users/cecil/Desktop/akia-env/Scripts/python.exe"
 PYTHON_ZEPHYR = "C:/Users/cecil/AppData/Local/Programs/Python/Python39/python.exe"
 
 CUSTOM_SCRIPT = "retrieveClock.py"   # script to receive OSC 
-ZEPHYR_SCRIPT = "zephyr_data.py"           # zephyr
+ZEPHYR_SCRIPT = "zephyr_data.py"     # zephyr
 
 
 # Output log file
@@ -30,20 +30,18 @@ def start_script(python_path, script_name, log_file):
 def main():
     print("Synchronization Zephyr + OSC Receiver")
 
-    # Timestamp comune
+    # Timestamp
     sync_time = time.time()
     human_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
     print(f"Sync time: {human_time} (epoch: {sync_time})")
 
-    # Salva su file
+    # File saved
     with open(SYNC_FILE, "w") as f:
         f.write(f"Start Time: {human_time} (epoch: {sync_time})\n")
 
     zephyr_proc = start_script(PYTHON_ZEPHYR, ZEPHYR_SCRIPT, LOG_ZEPHYR)
     custom_proc = start_script(PYTHON_CUSTOM, CUSTOM_SCRIPT, LOG_CUSTOM)
-    # Avvia entrambi gli script con log
     
-
     print("CTRL+C to interrupt.")
 
     try:

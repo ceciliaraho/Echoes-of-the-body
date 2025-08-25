@@ -63,10 +63,6 @@ labels_info = {
         'meditation': (805.2, 1026.6)
     },
     "P10": {
-        'pranayama': (41, 444),
-        'chanting': (444, 762),
-        'viparita_swasa': (762, 1014),
-        'breath_retention': (1014, 1101),
-        'meditation': (1101, 1447)
+        
     }
 }

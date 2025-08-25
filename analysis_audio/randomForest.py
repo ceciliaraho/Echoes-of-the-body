@@ -10,7 +10,7 @@ import seaborn as sns
 import joblib
 
 # Carica il CSV
-df = pd.read_csv("all_participants_audio_features.csv")
+df = pd.read_csv("audioFeatures_stats.csv")
 
 # Top 20 feature
 #top_features = [
@@ -20,7 +20,7 @@ df = pd.read_csv("all_participants_audio_features.csv")
 #    'mel_mean_9', 'chroma_std_7', 'chroma_mean_8', 'mel_mean_16', 'mfcc_mean_10'
 #]
 
-exclude_cols = ["label", "participant", "start", "end", "time_center", "abs_start","abs_end", "abs_time_center"]
+exclude_cols = ["label", "participant", "rel_start_s", "rel_end_s", "rel_time_center", "abs_start_s","abs_end_s", "abs_time_center", "label_id"]
 all_features = [col for col in df.columns if col not in exclude_cols]
 
 X = df[all_features].values
@@ -50,16 +50,16 @@ weights_dict = dict(enumerate(class_weights))
 sample_weights = np.array([weights_dict[cls] for cls in y_train])
 
 # Addestramento con pesi
-rf = RandomForestClassifier(n_estimators=100, random_state=42)
+rf = RandomForestClassifier(n_estimators=300, random_state=42)
 rf.fit(X_train, y_train, sample_weight=sample_weights)
 
 # Valutazione
 y_pred = rf.predict(X_test)
 
 acc = accuracy_score(y_test, y_pred)
-print(f"\n✅ Accuracy finale sul test set: {acc:.3f}")
+print(f"\nAccuracy: {acc:.3f}")
 
-print("📋 Classification Report:")
+print("Classification Report:")
 print(classification_report(y_test, y_pred, target_names=label_encoder.classes_))
 
 cm = confusion_matrix(y_test, y_pred)
@@ -72,7 +72,6 @@ plt.tight_layout()
 plt.show()
 
 
-# Salva modello, scaler e label encoder
 joblib.dump(rf, "rf_model.pkl")
 joblib.dump(scaler, "scaler_rf.pkl")
 joblib.dump(label_encoder, "label_encoder_rf.pkl")

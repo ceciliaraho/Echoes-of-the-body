@@ -7,7 +7,7 @@ from process import preprocess_breath_signals, preprocess_hr_signals
 from resample import resample_signals
 from labels_config import labels_info
 from labeling import assign_labels
-from features import extract_all_features, plot_peaks_by_section, normalize_all_versions
+from features1 import extract_all_features, plot_peaks_by_section
 
 
 def process_folder(participant_path, participant, subfolder):
@@ -24,16 +24,15 @@ def process_folder(participant_path, participant, subfolder):
     # Remove everything before start time
     custom_df = custom_df.loc[start_index:].copy()
         
-
     # time_from_start -> time in sec
     custom_df['time_from_start'] = custom_df['bio_time'] / 1000.0
     custom_df.reset_index(drop=True, inplace=True)
-    # Seleziona solo le colonne numeriche da mediarsi (esclude timestamp!)
+
+    # Selection of number columns 
     numeric_cols = custom_df.select_dtypes(include="number").columns
 
     # Avarage where double value of time
     df_numeric = custom_df.groupby("time_from_start", as_index=False)[numeric_cols].mean()
-
     df_timestamp = custom_df.groupby("time_from_start", as_index=False).first()[["time_from_start", "local_timestamp"]]
 
     custom_df= pd.merge(df_numeric, df_timestamp, on="time_from_start")
@@ -58,12 +57,13 @@ def process_folder(participant_path, participant, subfolder):
     if label_ranges:
         resample_df = assign_labels(resample_df, label_ranges)
     else:
-        print(f"Nessuna label trovata per {participant_id}")
+        print(f"No founded label for {participant_id}")
 
     resample_df = resample_df[resample_df["label"].str.lower() != "unlabeled"]
 
     if resample_df.empty:
         print(f" No valid lines in {folder_path}.")
+
 
     # Clean signals -> process.py
     clean_df = preprocess_breath_signals(resample_df)
@@ -75,8 +75,8 @@ def process_folder(participant_path, participant, subfolder):
 
     plot_peaks_by_section(clean_df, fs=120)
 
+
     # Features extraction -> features.py
-    
     feats = extract_all_features(clean_df, fs=120)
     feats["participant"] = participant
     # Save features per each participant
@@ -84,20 +84,21 @@ def process_folder(participant_path, participant, subfolder):
     feats.to_csv(feature_out_path, index=False)
     
     
-    normalized_versions = normalize_all_versions(feats, drop_cols=["label", "time_center", "participant"])
-    for norm_type, norm_df in normalized_versions.items():
-        out_path = os.path.join(folder_path, f"features_{norm_type}.csv")
-        norm_df.to_csv(out_path, index=False)
+    #normalized_versions = normalize_all_versions(feats, drop_cols=["label", "time_center", "participant"])
+    #for norm_type, norm_df in normalized_versions.items():
+    #    out_path = os.path.join(folder_path, f"features_{norm_type}.csv")
+    #    norm_df.to_csv(out_path, index=False)
 
-    return normalized_versions  # Rest
-    
+    #return normalized_versions  # Rest
+    return feats
 
 if __name__ == "__main__":
 
     base_path = os.path.join("..", "dataset")
     participants = [p for p in os.listdir(base_path) if p.startswith("P")]
 
-    all_versions = { "minmax": [], "zscore": [], "robust": [] }
+    #all_versions = { "minmax": [], "zscore": [], "robust": [] }
+    all_raw = []
 
     for participant in participants:
         print(f"\n====\nProcessing {participant}\n====")
@@ -106,17 +107,42 @@ if __name__ == "__main__":
         for subfolder in ["session"]:
             print(f"\n--- {subfolder.upper()} ---")
             feats = process_folder(participant_path, participant, subfolder)
-            if feats:
-                for key in all_versions.keys():
-                    all_versions[key].append(feats[key]) 
+            
+            if feats is None:
+                print("process_folder gave None.")
+                continue
+            if hasattr(feats, "empty") and feats.empty:
+                print(" No features")
+                continue
+
+            for col in ("participant", "label"):
+                if col not in feats.columns:
+                    print(f"Missed column '{col}' in {participant}/{subfolder}.")
+                    break
+            else:
+                all_raw.append(feats)
+
+    if all_raw:
+        df_all = pd.concat(all_raw, ignore_index=True)
+        out_path = "features_dataset.csv"   # Only RAW (no normalitation)
+        df_all.to_csv(out_path, index=False)
+        print(f"Saved {out_path} — Shape: {df_all.shape}")
+    else:
+        print("No founded data.")
+            
+            
+            
+            #if feats:
+            #    for key in all_versions.keys():
+            #        all_versions[key].append(feats[key]) 
 
 
-    for norm_type, dfs in all_versions.items():
-        if dfs:
-            df_all = pd.concat(dfs, ignore_index=True)
-            out_path = f"features_dataset_{norm_type}.csv"
-            df_all.to_csv(out_path, index=False)
-            print(f"✅ Saved {out_path} - Shape: {df_all.shape}")
+    #for norm_type, dfs in all_versions.items():
+    #    if dfs:
+    #        df_all = pd.concat(dfs, ignore_index=True)
+    #        out_path = f"features_dataset_{norm_type}.csv"
+    #        df_all.to_csv(out_path, index=False)
+    #        print(f"Saved {out_path} - Shape: {df_all.shape}")
   
     #base_path = os.path.join("..", "dataset")
     #participant_path = os.path.join(base_path, "P3")
