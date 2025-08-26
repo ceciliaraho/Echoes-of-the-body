@@ -3,15 +3,20 @@
 import argparse, unicodedata, re
 from pythonosc.udp_client import SimpleUDPClient
 
-def norm(s):
-    s = ''.join(c for c in unicodedata.normalize('NFKD', s) if not unicodedata.combining(c))
-    return re.sub(r'[^a-z0-9]+','', s.lower())
+def norm(s: str) -> str:
+    # minuscolo + rimozione diacritici
+    s = unicodedata.normalize("NFKD", str(s)).encode("ascii", "ignore").decode("ascii").lower()
+    # spazi e trattini -> underscore (mantieni underscore!)
+    s = re.sub(r"[\s\-]+", "_", s)
+    # compattazione underscore ripetuti e trim
+    s = re.sub(r"_+", "_", s).strip("_")
+    return s
 
 ALIASES = {
-    "pranayama":1,
-    "chanting":0,
+    "pranayama":0,
+    "chanting":1,
     "viparita_swasa":2,
-    "retention":3,
+    "breath_retention":3,
     "meditation":4,
 }
 

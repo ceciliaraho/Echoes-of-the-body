@@ -26,6 +26,7 @@ import subprocess
 import sys
 import time
 import numpy as np
+import pandas as pd
 
 # Optional: joblib for loading saved estimators
 try:
@@ -101,6 +102,10 @@ LAST_SENT = None
 LAST_TS   = 0.0
 MIN_DWELL_S = 6.0  # don't notify more often than this (seconds)
 
+# === Solo invio su cambio stage (edge-trigger) ===
+ONLY_ON_CHANGE = True
+LAST_SENT_STAGE_VALUE = None  # ultima label (o id) effettivamente inviata a Ableton
+
 
 # Utilities
 def send_stage_via_cli(value):
@@ -114,6 +119,17 @@ def send_stage_via_cli(value):
         LAST_SENT, LAST_TS = value, now
     except Exception as e:
         print("[hub] error invoking stage.py:", e)
+
+
+def send_stage_if_changed(value):
+    """Invia a Ableton solo se diverso dall'ultimo inviato (edge-trigger)."""
+    global LAST_SENT_STAGE_VALUE
+    if value is None:
+        return
+    if ONLY_ON_CHANGE and (value == LAST_SENT_STAGE_VALUE):
+        return
+    send_stage_via_cli(value)
+    LAST_SENT_STAGE_VALUE = value
 
 
 def open_writer(path: Optional[Union[Path, str]], headers: List[str]):
@@ -140,12 +156,18 @@ def close_writer(fp, wr):
 
 def build_feature_vector(row: Dict[str, float], order: List[str], impute: float) -> np.ndarray:
     vals: List[float] = []
-    for k in order:
-        v = row.get(k, np.nan)
-        if v is None or not (isinstance(v, (int, float)) and math.isfinite(v)):
+    for col in order:
+        v = row.get(col, np.nan)
+        try:
+            v = float(v)
+        except Exception:
+            v = np.nan
+        # se non è finito, usa il valore di imputazione (consigliato: NaN)
+        if not (isinstance(v, float) and math.isfinite(v)):
             v = impute
-        vals.append(float(v))
-    return np.asarray(vals, dtype=float).reshape(1, -1)
+        vals.append(v)
+    # <<< RITORNA UN DATAFRAME, NON UN ARRAY >>>
+    return pd.DataFrame([vals], columns=order)
 
 
 def predict_with_scores(est, X: np.ndarray) -> Tuple[Union[int, str], Optional[float], Optional[np.ndarray]]:
@@ -341,6 +363,7 @@ def init_models(model_audio: Union[Path, str, object],
     global Alog_fused, delta_fused, fused_prior, fused_current, fused_dwell
     global FUSED_MIN_DWELL, FUSED_NEXT_THRESH, FUSED_EMA_ALPHA, fused_ema, FUSED_TEMPERATURE
     global fuse_audio_w, fuse_bio_w, USE_VITERBI_FUSED
+    global LAST_SENT_STAGE_VALUE
 
     with LOCK:
         def _load(x):
@@ -434,6 +457,9 @@ def init_models(model_audio: Union[Path, str, object],
         fused_ema = None
         FUSED_TEMPERATURE = float(max(1e-3, fused_temperature))
         USE_VITERBI_FUSED = bool(use_viterbi_fused)
+
+        # reset “only-on-change” tracker ad ogni init
+        LAST_SENT_STAGE_VALUE = None
 
         print(f"[hub] audio feature order ({len(audio_feat_order)}): {audio_feat_order}")
         print(f"[hub] bio   feature order ({len(bio_feat_order)}):   {bio_feat_order}")
@@ -570,8 +596,11 @@ def handle_fused(t: float, audio_entry: dict, bio_entry: dict):
             pb[j] = 1.0
 
     # 2) Linear fusion
-    p = fuse_audio_w * pa + fuse_bio_w * pb
-    p = normalize(p)
+    wa = fuse_audio_w * np.max(pa)
+    wb = fuse_bio_w * np.max(pb)
+    p  = normalize( wa*pa + wb*pb )
+   # p = fuse_audio_w * pa + fuse_bio_w * pb
+    #p = normalize(p)
 
     # 3) Temperature + EMA smoothing
     p = apply_temperature(p, FUSED_TEMPERATURE)
@@ -592,7 +621,10 @@ def handle_fused(t: float, audio_entry: dict, bio_entry: dict):
 
     if PRINT_PRED:
         print(f"[FUSED] t={t:6.1f}s → {fused_pred} | Viterbi={viterbi_pred}")
-        send_stage_via_cli(viterbi_pred)
+
+    # === INVIO SOLO SE CAMBIA ===
+    # (manteniamo lo stesso 'tipo' che usavi: passiamo la stringa della label)
+    send_stage_if_changed(viterbi_pred)
 
     # 5) Merge CSV
     if merge_writer is not None:

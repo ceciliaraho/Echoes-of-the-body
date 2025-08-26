@@ -1,0 +1,13 @@
+t_center_s,audio_pred,audio_score,bio_pred,bio_score,fused_pred,fused_viterbi
+5.0,pranayama,0.455,meditation,0.34,meditation,pranayama
+15.0,meditation,0.39,meditation,0.495,meditation,pranayama
+25.0,meditation,0.425,meditation,0.425,meditation,pranayama
+35.0,meditation,0.4,meditation,0.69,meditation,pranayama
+45.0,meditation,0.475,meditation,0.555,meditation,pranayama
+55.0,meditation,0.425,meditation,0.355,meditation,pranayama
+65.0,pranayama,0.395,meditation,0.43,meditation,pranayama
+75.0,meditation,0.48,pranayama,0.43,meditation,pranayama
+85.0,meditation,0.6,pranayama,0.51,meditation,pranayama
+95.0,meditation,0.61,pranayama,0.53,meditation,pranayama
+105.0,meditation,0.52,pranayama,0.555,pranayama,pranayama
+115.0,chanting,0.815,pranayama,0.3,pranayama,pranayama

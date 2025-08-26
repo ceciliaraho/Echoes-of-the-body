@@ -1,0 +1,52 @@
+{
+  "metrics": {
+    "accuracy": 0.8377192982456141,
+    "f1_macro": 0.7093288257831868,
+    "f1_weighted": 0.8255069214618697
+  },
+  "classes": [
+    "breath_retention",
+    "chanting",
+    "meditation",
+    "pranayama",
+    "viparita_swasa"
+  ],
+  "confusion_matrix": [
+    [
+      1,
+      0,
+      1,
+      0,
+      8
+    ],
+    [
+      0,
+      52,
+      1,
+      4,
+      0
+    ],
+    [
+      0,
+      1,
+      50,
+      5,
+      1
+    ],
+    [
+      0,
+      1,
+      5,
+      60,
+      1
+    ],
+    [
+      1,
+      6,
+      2,
+      0,
+      28
+    ]
+  ],
+  "report": "                  precision    recall  f1-score   support\n\nbreath_retention       0.50      0.10      0.17        10\n        chanting       0.87      0.91      0.89        57\n      meditation       0.85      0.88      0.86        57\n       pranayama       0.87      0.90      0.88        67\n  viparita_swasa       0.74      0.76      0.75        37\n\n        accuracy                           0.84       228\n       macro avg       0.76      0.71      0.71       228\n    weighted avg       0.83      0.84      0.83       228\n"
+}

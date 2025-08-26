@@ -3,6 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 from datetime import datetime
 import sys, csv
+from joblib import load  # aggiungi
+import pandas as pd      # aggiungi
 
 from pythonosc.dispatcher import Dispatcher
 from pythonosc.osc_server import BlockingOSCUDPServer
@@ -30,8 +32,16 @@ PRED_DIR     = Path("pred_logs"); PRED_DIR.mkdir(parents=True, exist_ok=True)
 ENABLE_INFERENCE   = True
 AUDIO_MODEL_PATH   = Path("models/audio_rf_model.joblib")
 BIO_MODEL_PATH     = Path("models/bio_rf_model.joblib")
-IMPUTE_VALUE       = 0.0
-MERGE_TOLERANCE_S  = 1.0   # alignment tolerance for fused
+
+# ✅ nuovi path
+AUDIO_LABEL_ENCODER = Path("models/audio_label_encoder.joblib")
+BIO_LABEL_ENCODER   = Path("models/bio_label_encoder.joblib")
+AUDIO_SELECTED_FEATS = Path("models/audio_selected_features.csv")
+BIO_SELECTED_FEATS   = Path("models/selected_features.csv")  # (bio)
+
+# ✅ usa NaN per lasciare che l'Imputer della pipeline faccia il suo lavoro
+IMPUTE_VALUE       = float("nan")
+MERGE_TOLERANCE_S  = 3.0   # alignment tolerance for fused
 
 # State
 recording = False
@@ -290,13 +300,28 @@ def start_recording_handler(address, *args):
     guard_first_bf_sum = guard_first_hr_sum = 0.0
     guard_first_n = 0
 
+    pipe_audio = load(AUDIO_MODEL_PATH)
+    pipe_bio   = load(BIO_MODEL_PATH)
+    le_audio   = load(AUDIO_LABEL_ENCODER)
+    le_bio     = load(BIO_LABEL_ENCODER)
+
+    aud_feats  = pd.read_csv(AUDIO_SELECTED_FEATS)["selected_feature"].tolist()
+    bio_feats  = pd.read_csv(BIO_SELECTED_FEATS)["selected_feature"].tolist()
+
+    # --- prepara i bundle per l'hub (modello + classi + ordine feature) ---
+    audio_bundle = {"model": pipe_audio,
+                    "classes": le_audio.classes_.tolist(),
+                    "selected_features": aud_feats}
+    bio_bundle   = {"model": pipe_bio,
+                    "classes": le_bio.classes_.tolist(),
+                    "selected_features": bio_feats}
     # Init models 
     enable_cb = False
     if ENABLE_INFERENCE and hub is not None and AUDIO_MODEL_PATH.exists() and BIO_MODEL_PATH.exists():
         try:
             hub.init_models(
-                model_audio=AUDIO_MODEL_PATH,
-                model_bio=BIO_MODEL_PATH,
+                model_audio=audio_bundle,
+                model_bio=bio_bundle,
                 impute_value_param=IMPUTE_VALUE,
                 audio_pred_csv=PRED_DIR / f"pred_audio_{ts}.csv",
                 bio_pred_csv=PRED_DIR / f"pred_bio_{ts}.csv",
@@ -305,18 +330,21 @@ def start_recording_handler(address, *args):
                 print_predictions=True,
                 fuse_audio_weight=0.7,
                 fuse_bio_weight=0.8,
+
+                # usa le STESSE classi del bio come ordine "fuso" (coerente con training)
+                fused_order=["pranayama","chanting","viparita_swasa","breath_retention","meditation"],
+                
                 use_viterbi_fused=True,
-                fused_order=["pranayama","chanting","viparita_swasa","retention","meditation"],
-                fused_stay=0.80,
-                fused_step=0.75,
-                fused_extra_edges={"viparita_swasa": {"retention": 0.90}},
+                fused_stay=0.50,
+                fused_step=0.60,
+                fused_extra_edges={"viparita_swasa": {"breath_retention": 0.90}, "viparita_swasa": {"meditation": 0.60  }},
                 fused_start_label="pranayama",
-                fused_start_strength=1.0,
+                fused_start_strength=0.8,
                 # gating/smoothing
-                fused_min_dwell=5,
-                fused_next_threshold=0.7,
-                fused_ema_alpha=0.6,
-                fused_temperature=0.9
+                fused_min_dwell=1,
+                fused_next_threshold=0.5,
+                fused_ema_alpha=0.5,
+                fused_temperature=1.0
             )
             print("Models loaded. Live inference ON.")
             enable_cb = True

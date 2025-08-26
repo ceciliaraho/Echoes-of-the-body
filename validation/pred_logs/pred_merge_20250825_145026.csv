@@ -1,0 +1,10 @@
+t_center_s,audio_pred,audio_score,bio_pred,bio_score,fused_pred,fused_viterbi,committed_label,stage_id
+5.0,pranayama,0.475,meditation,0.41,meditation,meditation,,
+15.0,pranayama,0.485,pranayama,0.445,pranayama,pranayama,,
+25.0,pranayama,0.47,chanting,0.39,pranayama,pranayama,,
+35.0,pranayama,0.43,meditation,0.675,meditation,meditation,,
+45.0,pranayama,0.425,meditation,0.575,meditation,meditation,,
+55.0,pranayama,0.315,meditation,0.48,meditation,meditation,,
+65.0,chanting,0.485,meditation,0.735,meditation,meditation,,
+75.0,viparita_swasa,0.325,meditation,0.8,meditation,meditation,,
+85.0,viparita_swasa,0.345,meditation,0.82,meditation,meditation,,

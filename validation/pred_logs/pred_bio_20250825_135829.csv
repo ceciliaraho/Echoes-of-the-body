@@ -1,0 +1,3 @@
+t_center_s,prediction,score,prob_breath_retention,prob_chanting,prob_meditation,prob_pranayama,prob_viparita_swasa
+5.0,meditation,0.44,0.055,0.29,0.44,0.145,0.07
+15.0,chanting,0.385,0.095,0.385,0.33,0.1,0.09
