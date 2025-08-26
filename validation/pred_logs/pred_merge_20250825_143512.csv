@@ -1,7 +1,0 @@
-t_center_s,audio_pred,audio_score,bio_pred,bio_score,fused_pred,fused_viterbi
-5.0,viparita_swasa,0.25,chanting,0.475,chanting,chanting
-15.0,pranayama,0.425,pranayama,0.625,pranayama,pranayama
-25.0,pranayama,0.4,chanting,0.42,pranayama,pranayama
-35.0,pranayama,0.28,meditation,0.52,pranayama,pranayama
-45.0,meditation,0.3,meditation,0.555,meditation,meditation
-55.0,viparita_swasa,0.37,pranayama,0.455,meditation,meditation

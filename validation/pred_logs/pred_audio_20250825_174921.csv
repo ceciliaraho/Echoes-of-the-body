@@ -1,8 +1,0 @@
-t_center_s,prediction,score,prob_breath_retention,prob_chanting,prob_meditation,prob_pranayama,prob_viparita_swasa
-5.0,viparita_swasa,0.395,0.055,0.125,0.175,0.25,0.395
-15.0,viparita_swasa,0.335,0.135,0.085,0.23,0.215,0.335
-25.0,viparita_swasa,0.28,0.16,0.085,0.245,0.23,0.28
-35.0,viparita_swasa,0.29,0.2,0.075,0.225,0.21,0.29
-45.0,viparita_swasa,0.33,0.16,0.08,0.225,0.205,0.33
-55.0,viparita_swasa,0.28,0.19,0.08,0.245,0.205,0.28
-65.0,viparita_swasa,0.315,0.185,0.065,0.215,0.22,0.315
